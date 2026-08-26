@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>MicMango · 语音输入记录</title>
+  <style>
+    :root {
+      --ink: #0c1320;
+      --panel: #121d2b;
+      --panel-soft: #172536;
+      --line: rgba(205, 224, 232, .13);
+      --text: #f4f8f6;
+      --muted: #94a7ae;
+      --mint: #7ef2c6;
+      --mint-ink: #09231b;
+      --coral: #ff9d86;
+      --blue: #8ebcff;
+      --shadow: 0 24px 70px rgba(0, 5, 15, .32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 2%, rgba(126, 242, 198, .12), transparent 28rem),
+        radial-gradient(circle at 94% 16%, rgba(142, 188, 255, .11), transparent 30rem),
+        var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+        "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .shell {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 64px;
+    }
+
+    .topbar, .brand, .top-actions, .status-line, .history-head, .entry-meta {
+      display: flex;
+      align-items: center;
+    }
+
+    .topbar { justify-content: space-between; gap: 18px; margin-bottom: 46px; }
+    .brand { gap: 11px; font-weight: 760; letter-spacing: -.03em; }
+
+    .brand-mark {
+      display: flex;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--mint-ink);
+      background: var(--mint);
+      border-radius: 13px;
+      box-shadow: 0 0 0 5px rgba(126, 242, 198, .08);
+    }
+
+    .brand-mark i { width: 3px; background: currentColor; border-radius: 8px; }
+    .brand-mark i:nth-child(1), .brand-mark i:nth-child(5) { height: 9px; }
+    .brand-mark i:nth-child(2), .brand-mark i:nth-child(4) { height: 18px; }
+    .brand-mark i:nth-child(3) { height: 24px; }
+    .top-actions { gap: 9px; }
+
+    .ghost, .date-input, .copy-button {
+      color: var(--muted);
+      background: rgba(255, 255, 255, .035);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+    }
+
+    .ghost { min-height: 38px; padding: 0 14px; text-decoration: none; line-height: 36px; }
+    .ghost:hover, .copy-button:hover { color: var(--text); border-color: rgba(205, 224, 232, .28); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--mint);
+      font: 700 11px/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font-size: clamp(42px, 7vw, 82px); line-height: .95; letter-spacing: -.07em; }
+    h1 small { margin-left: 7px; color: var(--muted); font-size: .32em; letter-spacing: -.02em; }
+    .hero-copy { margin: 0 0 5px; color: var(--muted); font-size: 15px; line-height: 1.75; }
+
+    .day-strip {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 7px;
+      min-height: 76px;
+      align-items: end;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, .025);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .day-bar { display: grid; gap: 6px; align-items: end; text-align: center; }
+    .day-bar i { display: block; min-height: 4px; background: var(--blue); border-radius: 5px 5px 2px 2px; opacity: .72; }
+    .day-bar span { color: #71878f; font: 10px ui-monospace, "SFMono-Regular", Menlo, monospace; }
+
+    .workspace { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .card { background: linear-gradient(180deg, rgba(23, 37, 54, .96), rgba(16, 27, 40, .97)); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+    .control { position: sticky; top: 18px; padding: 24px; }
+
+    .status-line { justify-content: space-between; gap: 12px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+    .status::before { width: 8px; height: 8px; content: ""; background: #61717a; border-radius: 50%; }
+    .status.ready { color: var(--mint); }
+    .status.ready::before { background: var(--mint); box-shadow: 0 0 0 5px rgba(126, 242, 198, .09); }
+    .status.starting::before { background: var(--blue); animation: pulse 900ms ease-in-out infinite alternate; }
+
+    .device { color: #738993; font: 10px ui-monospace, "SFMono-Regular", Menlo, monospace; }
+    .control h2 { margin: 28px 0 8px; font-size: 25px; letter-spacing: -.045em; }
+    .control p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+    .primary {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 24px;
+      color: var(--mint-ink);
+      background: var(--mint);
+      border: 0;
+      border-radius: 13px;
+      font-weight: 760;
+    }
+
+    .primary.stop { color: #351510; background: #f3b7a9; }
+    .primary:disabled { cursor: wait; opacity: .55; }
+
+    .shortcut {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 12px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    kbd { padding: 3px 7px; color: var(--text); background: #0c1622; border: 1px solid #2d4051; border-radius: 6px; font: 10px ui-monospace, "SFMono-Regular", Menlo, monospace; }
+
+    .history { min-height: 480px; padding: 24px; }
+    .history-head { justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .history h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
+    .history-sub { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .date-input { min-height: 38px; padding: 0 10px; color-scheme: dark; }
+    .entries { display: grid; gap: 10px; }
+
+    .entry { padding: 17px 18px; background: rgba(8, 15, 25, .48); border: 1px solid rgba(205, 224, 232, .1); border-radius: 15px; }
+    .entry-meta { justify-content: space-between; gap: 12px; margin-bottom: 10px; color: #738993; font: 10px ui-monospace, "SFMono-Regular", Menlo, monospace; }
+    .entry-meta-left { display: flex; gap: 10px; }
+    .entry-text { margin: 0; color: #e7efed; font-size: 15px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .copy-button { min-height: 29px; padding: 0 9px; font-size: 11px; }
+    .empty { padding: 74px 20px; color: var(--muted); text-align: center; }
+    .message { min-height: 20px; margin: 14px 2px 0; color: var(--muted); font-size: 12px; }
+    .message.error { color: var(--coral); }
+
+    @keyframes pulse { from { opacity: .4; } to { opacity: 1; } }
+
+    @media (max-width: 800px) {
+      .hero, .workspace { grid-template-columns: 1fr; }
+      .control { position: static; }
+    }
+
+    @media (max-width: 540px) {
+      .shell { width: min(100% - 20px, 1160px); padding-top: 18px; }
+      .topbar { margin-bottom: 34px; }
+      .top-actions .ghost:first-child { display: none; }
+      .history, .control { padding: 18px; }
+      .history-head { align-items: flex-start; flex-direction: column; }
+      .date-input { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .status.starting::before { animation: none; }
+    }
+
+    button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid rgba(126, 242, 198, .32); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span>MicMango</span>
+      </div>
+      <nav class="top-actions" aria-label="页面导航">
+        <a class="ghost" href="http://127.0.0.1:8700">返回工具箱</a>
+        <span class="ghost">全部保存在本机</span>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Today's voice ledger</p>
+        <h1><span id="today-characters">0</span><small>字 · 今天</small></h1>
+      </div>
+      <div>
+        <p class="hero-copy">每次松开右 Option，转写会自动粘贴，也会成为这里的一条本地记录。</p>
+        <div class="day-strip" id="day-strip" aria-label="最近输入量"></div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="card control">
+        <div class="status-line">
+          <span class="status" id="status">检查中</span>
+          <span class="device" id="device">系统默认麦克风</span>
+        </div>
+        <h2 id="control-title">语音输入</h2>
+        <p id="control-copy">模型正在准备。启动完成后，切换到任何输入框即可开始说话。</p>
+        <button class="primary" id="toggle-button" type="button" disabled>正在连接…</button>
+        <div class="shortcut">
+          <kbd>右 Option</kbd><span>按住说话，松开粘贴</span>
+          <kbd>Shift + 右 Option</kbd><span>临时使用 English</span>
+        </div>
+        <p class="message" id="message" role="status" aria-live="polite"></p>
+      </aside>
+
+      <section class="card history">
+        <div class="history-head">
+          <div>
+            <h2>语音记录</h2>
+            <p class="history-sub"><span id="entry-count">0</span> 段输入 · 点击可复制回来</p>
+          </div>
+          <input class="date-input" id="history-date" type="date" aria-label="选择记录日期">
+        </div>
+        <div class="entries" id="entries"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const statusNode = document.querySelector("#status");
+    const deviceNode = document.querySelector("#device");
+    const toggleButton = document.querySelector("#toggle-button");
+    const controlCopy = document.querySelector("#control-copy");
+    const message = document.querySelector("#message");
+    const todayCharacters = document.querySelector("#today-characters");
+    const entryCount = document.querySelector("#entry-count");
+    const entriesNode = document.querySelector("#entries");
+    const historyDate = document.querySelector("#history-date");
+    const dayStrip = document.querySelector("#day-strip");
+    let currentState = "stopped";
+
+    const localDate = new Date().toLocaleDateString("en-CA");
+    historyDate.value = localDate;
+
+    function renderStatus(result) {
+      currentState = result.state || "stopped";
+      statusNode.className = `status ${currentState}`;
+      statusNode.textContent = currentState === "ready" ? "正在聆听" : currentState === "starting" ? "加载模型中" : "未启动";
+      deviceNode.textContent = result.device || "系统默认麦克风";
+      toggleButton.disabled = false;
+      toggleButton.classList.toggle("stop", result.running);
+      toggleButton.textContent = result.running ? "停止语音输入" : "启动语音输入";
+      controlCopy.textContent = result.ready
+        ? "已经就绪。切换到任意输入框，按住右 Option 开始说话。"
+        : result.running
+          ? "正在加载本地 Whisper 模型，通常只需要几秒。"
+          : "启动后会在后台监听右 Option，网页可以保持打开或最小化。";
+      if (!result.running && result.error) {
+        message.className = "message error";
+        message.textContent = result.error.split("\n").slice(-3).join(" ");
+      }
+      if (result.summary) renderSummary(result.summary);
+    }
+
+    function renderSummary(summary) {
+      todayCharacters.textContent = Number(summary.characters || 0).toLocaleString("zh-CN");
+      const values = new Map((summary.recent_days || []).map(day => [day.local_date, Number(day.characters)]));
+      const days = [];
+      for (let offset = 6; offset >= 0; offset -= 1) {
+        const day = new Date();
+        day.setDate(day.getDate() - offset);
+        const key = day.toLocaleDateString("en-CA");
+        days.push({ key, label: `${day.getMonth() + 1}/${day.getDate()}`, value: values.get(key) || 0 });
+      }
+      const maximum = Math.max(1, ...days.map(day => day.value));
+      dayStrip.replaceChildren(...days.map(day => {
+        const item = document.createElement("span");
+        item.className = "day-bar";
+        item.title = `${day.key} · ${day.value} 字`;
+        const bar = document.createElement("i");
+        bar.style.height = `${Math.max(4, Math.round(day.value / maximum * 42))}px`;
+        const label = document.createElement("span");
+        label.textContent = day.label;
+        item.append(bar, label);
+        return item;
+      }));
+    }
+
+    async function refreshStatus() {
+      try {
+        const response = await fetch("/api/status", { cache: "no-store" });
+        renderStatus(await response.json());
+      } catch {
+        statusNode.textContent = "状态未知";
+        toggleButton.disabled = true;
+      }
+    }
+
+    async function toggleInput() {
+      const stopping = currentState !== "stopped";
+      toggleButton.disabled = true;
+      message.className = "message";
+      message.textContent = stopping ? "正在停止…" : "正在启动…";
+      try {
+        const response = await fetch(stopping ? "/api/stop" : "/api/start", { method: "POST" });
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || "操作失败");
+        message.textContent = stopping ? "语音输入已停止。" : "正在加载模型…";
+        renderStatus(result);
+      } catch (error) {
+        message.className = "message error";
+        message.textContent = error.message;
+      } finally {
+        toggleButton.disabled = false;
+      }
+    }
+
+    function entryElement(entry) {
+      const article = document.createElement("article");
+      article.className = "entry";
+      const meta = document.createElement("div");
+      meta.className = "entry-meta";
+      const metaLeft = document.createElement("span");
+      metaLeft.className = "entry-meta-left";
+      const timestamp = new Date(entry.created_at);
+      metaLeft.textContent = `${timestamp.toLocaleTimeString("zh-CN", {hour: "2-digit", minute: "2-digit"})} · ${entry.language} · ${entry.character_count} 字 · ${Number(entry.transcription_seconds).toFixed(2)}s`;
+      const copy = document.createElement("button");
+      copy.className = "copy-button";
+      copy.type = "button";
+      copy.textContent = "复制";
+      copy.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(entry.text);
+        copy.textContent = "已复制";
+        window.setTimeout(() => { copy.textContent = "复制"; }, 1200);
+      });
+      const text = document.createElement("p");
+      text.className = "entry-text";
+      text.textContent = entry.text;
+      meta.append(metaLeft, copy);
+      article.append(meta, text);
+      return article;
+    }
+
+    async function refreshHistory() {
+      try {
+        const response = await fetch(`/api/history?date=${encodeURIComponent(historyDate.value)}`, { cache: "no-store" });
+        const result = await response.json();
+        entryCount.textContent = result.entries.length;
+        renderSummary(result.summary);
+        if (!result.entries.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = historyDate.value === localDate ? "今天还没有记录。按住右 Option 说第一句话。" : "这一天没有语音输入记录。";
+          entriesNode.replaceChildren(empty);
+          return;
+        }
+        entriesNode.replaceChildren(...result.entries.map(entryElement));
+      } catch {
+        entriesNode.textContent = "暂时无法读取历史记录。";
+      }
+    }
+
+    toggleButton.addEventListener("click", toggleInput);
+    historyDate.addEventListener("change", refreshHistory);
+    refreshStatus();
+    refreshHistory();
+    window.setInterval(refreshStatus, 2000);
+    window.setInterval(refreshHistory, 5000);
+  </script>
+</body>
+</html>

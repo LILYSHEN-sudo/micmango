@@ -1,0 +1,10 @@
+.venv/
+.DS_Store
+**/.DS_Store
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.log
+
+# Personal configuration, transcripts, recordings, notes, and development files.
+/local-only/

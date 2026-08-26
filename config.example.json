@@ -1,0 +1,32 @@
+{
+  "model": "mlx-community/whisper-large-v3-turbo",
+  "default_language": "auto",
+  "audio_device": null,
+  "sample_rate": 16000,
+  "minimum_recording_seconds": 0.3,
+  "maximum_recording_seconds": 120.0,
+  "minimum_rms_dbfs": -55.0,
+  "minimum_peak_dbfs": -35.0,
+  "restore_clipboard": true,
+  "clipboard_restore_delay_seconds": 0.35,
+  "simplify_chinese": true,
+  "print_transcript_in_log": false,
+  "record_history": true,
+  "pause_punctuation_seconds": 1.0,
+  "prompts": {
+    "auto": "这是一段简体中文与英文混合的语音输入。今天先整理需求，然后修改代码，最后运行测试。Claude Code, Python API, git push, GitHub, yt-dlp, demo.",
+    "zh": "这是一段简体中文与英文混合的语音输入。今天先整理需求，然后修改代码，最后运行测试。Claude Code, Python API, git push, GitHub, yt-dlp, demo.",
+    "en": "This is clear English dictation with natural punctuation. Claude Code, Python API, git push, GitHub, yt-dlp, demo."
+  },
+  "common_replacements": {
+    "Cloud Code": "Claude Code",
+    "Github": "GitHub",
+    "YTDLP": "yt-dlp",
+    "YT-DLP": "yt-dlp"
+  },
+  "chinese_replacements": {
+    "克劳德 Code": "Claude Code",
+    "克劳德代码": "Claude Code",
+    "吉特哈布": "GitHub"
+  }
+}
